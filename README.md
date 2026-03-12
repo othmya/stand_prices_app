@@ -1,0 +1,1 @@
+# stand_prices_app
