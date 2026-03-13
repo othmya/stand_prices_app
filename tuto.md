@@ -19,13 +19,13 @@ Phone-first app to track zine, t-shirt, and totebag sales at a stand. Uses Supab
    - Create a project at [supabase.com/dashboard](https://supabase.com/dashboard).
 
 2. **Run the SQL (no SQL experience needed)**
-   - **Where:** In your Supabase project, open **SQL Editor** in the left sidebar (under "Database" or "SQL Editor").
+   - **Where:** In your Supabase project, open **SQL Editor** in the left sidebar (under “Database” or “SQL Editor”).
    - **How:** For each file below, open the file on your computer, copy everything in it, paste into a new query in the SQL Editor, then click **Run** (or press Ctrl+Enter / Cmd+Enter). Run them **in this order**:
      1. `supabase/schema.sql` — creates the tables
      2. `supabase/seed.sql` — adds the 3 products and 2 placeholder sellers
      3. `supabase/views.sql` — adds the totals/earnings views
      4. `supabase/policies.sql` — turns on security (RLS) and allows the app to read/write
-   - **Other options:** You can also use the Supabase CLI, or any SQL client (e.g. DBeaver, TablePlus) with your project's database connection string from **Settings → Database**. For getting started, the built-in SQL Editor is the simplest.
+   - **Other options:** You can also use the Supabase CLI, or any SQL client (e.g. DBeaver, TablePlus) with your project’s database connection string from **Settings → Database**. For getting started, the built-in SQL Editor is the simplest.
 
 3. **Env**
    - Copy `.env.example` to `.env`.
@@ -38,29 +38,29 @@ Phone-first app to track zine, t-shirt, and totebag sales at a stand. Uses Supab
 
 ## GitHub Pages deploy (first-time guide)
 
-This section walks you through publishing the app to GitHub Pages so it's available at a public URL (e.g. `https://your-username.github.io/stand_prices_app/`).
+This section walks you through publishing the app to GitHub Pages so it’s available at a public URL (e.g. `https://your-username.github.io/stand_prices_app/`).
 
-**Before you start:** Your code must be in a GitHub repository and pushed to the `main` branch. If you haven't created the repo yet: create it on GitHub, then locally run `git init`, add the remote, and push.
+**Before you start:** Your code must be in a GitHub repository and pushed to the `main` branch. If you haven’t created the repo yet: create it on GitHub, then locally run `git init`, add the remote, and push.
 
 ---
 
-### Step 1: Turn on GitHub Pages and choose "GitHub Actions"
+### Step 1: Turn on GitHub Pages and choose “GitHub Actions”
 
 1. Open your **repository** on GitHub (e.g. `https://github.com/your-username/stand_prices_app`).
 2. Click **Settings** (tab at the top of the repo).
-3. In the left sidebar, under **"Code and automation"**, click **Pages**.
-4. Under **"Build and deployment"**:
-   - **Source:** choose **GitHub Actions** (not "Deploy from a branch").
-5. You don't need to configure anything else here. The workflow in this repo will do the build and deploy.
+3. In the left sidebar, under **“Code and automation”**, click **Pages**.
+4. Under **“Build and deployment”**:
+   - **Source:** choose **GitHub Actions** (not “Deploy from a branch”).
+5. You don’t need to configure anything else here. The workflow in this repo will do the build and deploy.
 
 ---
 
 ### Step 2: Add your Supabase keys as repository secrets
 
-The app needs your Supabase URL and anon key at **build time**. You'll store them as **secrets** so they aren't visible in the repo.
+The app needs your Supabase URL and anon key at **build time**. You’ll store them as **secrets** so they aren’t visible in the repo.
 
-1. In the same repo, go to **Settings** → in the left sidebar, under **"Security"**, click **Secrets and variables** → **Actions**.
-2. Click **"New repository secret"**.
+1. In the same repo, go to **Settings** → in the left sidebar, under **“Security”**, click **Secrets and variables** → **Actions**.
+2. Click **“New repository secret”**.
 3. Add **two** secrets (one at a time):
 
    | Name (exactly)           | Value (from Supabase) |
@@ -70,13 +70,13 @@ The app needs your Supabase URL and anon key at **build time**. You'll store the
 
    Use the **exact** secret names above (copy-paste). The workflow uses these to run `npm run build` with the right env vars.
 
-4. After saving, you'll see the secret names listed; the values are hidden. That's correct.
+4. After saving, you’ll see the secret names listed; the values are hidden. That’s correct.
 
 ---
 
-### Step 3: Set the correct "base" path if your repo name is different
+### Step 3: Set the correct “base” path if your repo name is different
 
-The app's **base path** must match the path GitHub Pages uses for your site.
+The app’s **base path** must match the path GitHub Pages uses for your site.
 
 - **If your repo is named `stand_prices_app`:**  
   Your site URL will be `https://<your-username>.github.io/stand_prices_app/`. The repo is already configured for this in `vite.config.ts` (`base: '/stand_prices_app/'`). You can skip this step.
@@ -96,11 +96,11 @@ The app's **base path** must match the path GitHub Pages uses for your site.
 
 1. Push your latest code to the **`main`** branch (e.g. `git push origin main`).  
    If your default branch is something else (e.g. `master`), either push to `main` as well or edit `.github/workflows/deploy.yml` and change `branches: [main]` to your branch name.
-2. The workflow **"Deploy to GitHub Pages"** runs automatically on every push to `main`.
+2. The workflow **“Deploy to GitHub Pages”** runs automatically on every push to `main`.
 3. To watch it:
    - Go to your repo on GitHub → **Actions** tab.
-   - Click the latest **"Deploy to GitHub Pages"** run.
-   - You'll see a **build** job (install, build) and then a **deploy** job. Wait until both show a green check.
+   - Click the latest **“Deploy to GitHub Pages”** run.
+   - You’ll see a **build** job (install, build) and then a **deploy** job. Wait until both show a green check.
 
 ---
 
@@ -120,11 +120,11 @@ The app's **base path** must match the path GitHub Pages uses for your site.
 
 | Problem | What to check |
 |--------|----------------|
-| **404 on the site URL** | Wait 1–2 minutes after the workflow succeeds. Confirm **Settings → Pages** shows "GitHub Actions" as source and that the last deployment succeeded. |
-| **Blank page or "Loading…" forever** | The app can't reach Supabase. In **Settings → Secrets and variables → Actions**, confirm both `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` exist and that you used the **Project URL** and **anon public** key from Supabase (no extra spaces). Re-push to `main` to trigger a new build. |
-| **Page loads but assets 404 (e.g. "Failed to load /stand_prices_app/assets/...")** | The `base` in `vite.config.ts` doesn't match your repo name. Fix `base` to `'/your-repo-name/'` and push again. |
-| **Workflow fails on "npm run build"** | Open the failed run in the **Actions** tab and read the error. Often it's missing secrets (add both Supabase secrets) or a TypeScript/build error (fix locally with `npm run build` first). |
-| **Workflow fails on "deploy"** | Ensure **Settings → Pages** has **Source = GitHub Actions**. The first time you use Pages with Actions, GitHub may need the **Pages** environment; the workflow uses `environment: github-pages`. If it still fails, check the deploy step logs in the Actions run. |
+| **404 on the site URL** | Wait 1–2 minutes after the workflow succeeds. Confirm **Settings → Pages** shows “GitHub Actions” as source and that the last deployment succeeded. |
+| **Blank page or “Loading…” forever** | The app can’t reach Supabase. In **Settings → Secrets and variables → Actions**, confirm both `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` exist and that you used the **Project URL** and **anon public** key from Supabase (no extra spaces). Re-push to `main` to trigger a new build. |
+| **Page loads but assets 404 (e.g. “Failed to load /stand_prices_app/assets/...”)** | The `base` in `vite.config.ts` doesn’t match your repo name. Fix `base` to `'/your-repo-name/'` and push again. |
+| **Workflow fails on “npm run build”** | Open the failed run in the **Actions** tab and read the error. Often it’s missing secrets (add both Supabase secrets) or a TypeScript/build error (fix locally with `npm run build` first). |
+| **Workflow fails on “deploy”** | Ensure **Settings → Pages** has **Source = GitHub Actions**. The first time you use Pages with Actions, GitHub may need the **Pages** environment; the workflow uses `environment: github-pages`. If it still fails, check the deploy step logs in the Actions run. |
 
 ---
 
