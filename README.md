@@ -4,4 +4,3 @@ Phone-first app to track sales at a zine stand: zines (€2), t-shirts (€10), 
 
 **Live app:** [https://othmya.github.io/stand_prices_app/](https://othmya.github.io/stand_prices_app/)
 
-For full setup (Supabase, SQL, env, and GitHub Pages deploy), see [tuto.md](tuto.md).

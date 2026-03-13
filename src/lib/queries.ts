@@ -27,6 +27,16 @@ export type TotalEarnings = {
   total_earnings_cents: number
 }
 
+export type SellerProductTotal = {
+  seller_id: string
+  seller_display_name: string
+  product_id: string
+  product_name: string
+  price_cents: number
+  units_sold: number
+  earnings_cents: number
+}
+
 export async function fetchProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')
@@ -47,10 +57,39 @@ export async function fetchSellers(): Promise<Seller[]> {
   return data as Seller[]
 }
 
+/** Seller linked to the current authenticated user (for recording sales). */
+export async function fetchMySeller(): Promise<Seller | null> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data, error } = await supabase
+    .from('sellers')
+    .select('id, display_name, active, created_at')
+    .eq('auth_user_id', user.id)
+    .maybeSingle()
+  if (error) throw error
+  return data as Seller | null
+}
+
+/** Create a seller row for the current user (call after sign-up if fetchMySeller returns null). */
+export async function ensureMySeller(displayName: string): Promise<Seller> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+  const existing = await fetchMySeller()
+  if (existing) return existing
+  const { data, error } = await supabase
+    .from('sellers')
+    .insert({ auth_user_id: user.id, display_name: displayName })
+    .select('id, display_name, active, created_at')
+    .single()
+  if (error) throw error
+  return data as Seller
+}
+
 export async function fetchProductTotals(): Promise<ProductTotal[]> {
   const { data, error } = await supabase
     .from('product_totals')
     .select('product_id, name, price_cents, units_sold, earnings_cents')
+    .order('price_cents', { ascending: false })
   if (error) throw error
   return data as ProductTotal[]
 }
@@ -62,6 +101,17 @@ export async function fetchTotalEarnings(): Promise<number> {
     .single()
   if (error) throw error
   return (data as TotalEarnings).total_earnings_cents
+}
+
+/** Who sold what: per-seller, per-product breakdown (for tracking and export). */
+export async function fetchSellerProductTotals(): Promise<SellerProductTotal[]> {
+  const { data, error } = await supabase
+    .from('seller_product_totals')
+    .select('seller_id, seller_display_name, product_id, product_name, price_cents, units_sold, earnings_cents')
+    .order('seller_display_name')
+    .order('price_cents', { ascending: false })
+  if (error) throw error
+  return data as SellerProductTotal[]
 }
 
 export async function recordSale(

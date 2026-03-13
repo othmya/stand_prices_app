@@ -1,0 +1,18 @@
+-- Run in Supabase SQL Editor to add "who sold what" tracking (for existing DBs that already ran the original views.sql).
+create or replace view public.seller_product_totals as
+select
+  s.id as seller_id,
+  s.display_name as seller_display_name,
+  p.id as product_id,
+  p.name as product_name,
+  p.price_cents,
+  coalesce(sum(e.delta), 0)::integer as units_sold,
+  (coalesce(sum(e.delta), 0) * p.price_cents)::bigint as earnings_cents
+from public.sellers s
+join public.sales_events e on e.seller_id = s.id
+join public.products p on p.id = e.product_id and p.active
+group by s.id, s.display_name, p.id, p.name, p.price_cents
+having coalesce(sum(e.delta), 0) <> 0;
+
+grant select on public.seller_product_totals to authenticated;
+grant select on public.seller_product_totals to anon;

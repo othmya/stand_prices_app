@@ -25,13 +25,22 @@ Phone-first app to track zine, t-shirt, and totebag sales at a stand. Uses Supab
      2. `supabase/seed.sql` — adds the 3 products and 2 placeholder sellers
      3. `supabase/views.sql` — adds the totals/earnings views
      4. `supabase/policies.sql` — turns on security (RLS) and allows the app to read/write
+     5. `supabase/migrations/001_auth_sellers.sql` — links sellers to sign-in (auth) and restricts who can record sales
    - **Other options:** You can also use the Supabase CLI, or any SQL client (e.g. DBeaver, TablePlus) with your project’s database connection string from **Settings → Database**. For getting started, the built-in SQL Editor is the simplest.
 
-3. **Env**
+3. **Set up Email auth in Supabase**
+   - In your project at [supabase.com/dashboard](https://supabase.com/dashboard), open **Authentication** in the left sidebar.
+   - Click **Providers** (or **Auth** → **Providers**).
+   - Find **Email** in the list and click it (or turn it **On**).
+   - Leave **Enable Email provider** turned **On**.
+   - **Confirm email:** Turn this **Off** if you want users to sign in with a username (e.g. `maria@stand`) without receiving a real email. Turn it **On** if you want to verify real email addresses.
+   - Click **Save**. No other auth providers are required.
+
+4. **Env**
    - Copy `.env.example` to `.env`.
    - Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from Project Settings → API.
 
-4. **Run**
+5. **Run**
    - `npm install`
    - `npm run dev`
    - Open the URL shown (e.g. http://localhost:5173).
