@@ -39,14 +39,6 @@ export type SellerProductTotal = {
   last_sale_at: string | null
 }
 
-export type SaleMovement = {
-  seller_id: string
-  product_id: string
-  seller_display_name: string
-  product_name: string
-  delta: number
-  created_at: string
-}
 
 export async function fetchProducts(): Promise<Product[]> {
   const { data, error } = await supabase
@@ -125,48 +117,32 @@ export async function fetchSellerProductTotals(): Promise<SellerProductTotal[]> 
   return data as SellerProductTotal[]
 }
 
-/** Raw movements timeline for CSV export (includes timestamp). */
-export async function fetchSalesMovements(): Promise<SaleMovement[]> {
-  const { data, error } = await supabase
-    .from('sales_events')
-    .select('seller_id, product_id, delta, created_at, sellers!inner(display_name), products!inner(name)')
-    .order('created_at', { ascending: true })
+/** Add net sales (upsert: insert or add to existing units_sold). */
+export async function recordSalesBatch(
+  sellerId: string,
+  items: { productId: string; quantity: number }[]
+): Promise<void> {
+  if (items.length === 0) return
+  const payload = items.filter((i) => i.quantity > 0).map((i) => ({ productId: i.productId, quantity: i.quantity }))
+  if (payload.length === 0) return
+  const { error } = await supabase.rpc('record_sales_net', {
+    p_seller_id: sellerId,
+    p_items: payload,
+  })
   if (error) throw error
-
-  return (data ?? [])
-    .map(
-      (row: {
-        seller_id: string
-        product_id: string
-        delta: number
-        created_at: string
-        sellers: { display_name: string } | { display_name: string }[]
-        products: { name: string } | { name: string }[]
-      }) => {
-        const seller = Array.isArray(row.sellers) ? row.sellers[0] : row.sellers
-        const product = Array.isArray(row.products) ? row.products[0] : row.products
-        return {
-          seller_id: row.seller_id,
-          product_id: row.product_id,
-          delta: row.delta,
-          created_at: row.created_at,
-          seller_display_name: seller?.display_name ?? '',
-          product_name: product?.name ?? '',
-        }
-      }
-    )
-    .filter((row) => row.seller_display_name !== '' && row.product_name !== '')
 }
 
-export async function recordSale(
-  productId: string,
+/** Subtract net sales (correct/remove units for current seller). */
+export async function recordDeletionsBatch(
   sellerId: string,
-  delta: 1 | -1
+  items: { productId: string; quantity: number }[]
 ): Promise<void> {
-  const { error } = await supabase.from('sales_events').insert({
-    product_id: productId,
-    seller_id: sellerId,
-    delta,
+  if (items.length === 0) return
+  const payload = items.filter((i) => i.quantity > 0).map((i) => ({ productId: i.productId, quantity: i.quantity }))
+  if (payload.length === 0) return
+  const { error } = await supabase.rpc('record_deletions_net', {
+    p_seller_id: sellerId,
+    p_items: payload,
   })
   if (error) throw error
 }

@@ -5,14 +5,13 @@ import {
   fetchProductTotals,
   fetchTotalEarnings,
   fetchSellerProductTotals,
-  fetchSalesMovements,
   fetchMySeller,
   ensureMySeller,
-  recordSale,
+  recordSalesBatch,
+  recordDeletionsBatch,
   type Seller,
   type ProductTotal,
   type SellerProductTotal,
-  type SaleMovement,
 } from './lib/queries'
 import type { User } from './lib/auth'
 import { getSession, onAuthChange, signOut } from './lib/auth'
@@ -74,7 +73,6 @@ function downloadReport(
   totals: ProductTotal[],
   totalEarnings: number,
   bySeller: SellerProductTotal[],
-  movements: SaleMovement[],
   format: 'json' | 'csv-global' | 'csv-seller'
 ) {
   const exportedAt = new Date().toISOString()
@@ -114,16 +112,6 @@ function downloadReport(
           earnings_euros: `€${(r.earnings_cents / 100).toFixed(2)}`,
         })),
       })),
-      movements: movements.map((m) => {
-        const movementDate = new Date(m.created_at)
-        return {
-          seller: m.seller_display_name,
-          product: m.product_name,
-          movement: m.delta,
-          date: movementDate.toLocaleDateString('es-ES'),
-          time: movementDate.toLocaleTimeString('es-ES', { hour12: false }),
-        }
-      }),
     }
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
@@ -165,14 +153,6 @@ function downloadReport(
       )}\n`
     }
 
-    csv += '\nMovimientos por vendedor\n'
-    csv += 'Vendedor,Producto,Movimiento,Fecha,Hora\n'
-    for (const m of movements) {
-      const movementDate = new Date(m.created_at)
-      const date = movementDate.toLocaleDateString('es-ES')
-      const time = movementDate.toLocaleTimeString('es-ES', { hour12: false })
-      csv += `${csvCell(m.seller_display_name)},${csvCell(m.product_name)},${m.delta},${date},${time}\n`
-    }
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -189,21 +169,24 @@ export default function App() {
   const [totals, setTotals] = useState<ProductTotal[]>([])
   const [totalEarnings, setTotalEarnings] = useState<number>(0)
   const [bySeller, setBySeller] = useState<SellerProductTotal[]>([])
-  const [movements, setMovements] = useState<SaleMovement[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'info' | 'cositos' | 'tracking' | 'export'>(
     'cositos'
   )
+  const [draftByProduct, setDraftByProduct] = useState<Record<string, number>>({})
+  const [draftRemovalByProduct, setDraftRemovalByProduct] = useState<Record<string, number>>({})
+  const [confirming, setConfirming] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const loadData = useCallback(async () => {
     try {
       setError(null)
-      const [t, e, b, m] = await Promise.all([
+      const [t, e, b] = await Promise.all([
         fetchProductTotals(),
         fetchTotalEarnings(),
         fetchSellerProductTotals(),
-        fetchSalesMovements(),
       ])
       const nonNegativeTotals = t.map((product) => {
         const units = Math.max(0, product.units_sold)
@@ -226,7 +209,6 @@ export default function App() {
       setTotals(nonNegativeTotals)
       setTotalEarnings(e)
       setBySeller(nonNegativeBySeller)
-      setMovements(m)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudieron cargar los datos')
     } finally {
@@ -240,15 +222,6 @@ export default function App() {
     acc[name].push(row)
     return acc
   }, {})
-  const totalsByCategory = totals.reduce<Record<CositosCategoryId, ProductTotal[]>>(
-    (acc, product) => {
-      const category = getCositosCategory(product.name)
-      acc[category].push(product)
-      return acc
-    },
-    { merch: [], zines: [], artefactos: [], otros: [] }
-  )
-
   useEffect(() => {
     getSession().then(({ data: { session } }) => setUser(session?.user ?? null))
     const { data: { subscription } } = onAuthChange((u) => setUser(u ?? null))
@@ -296,36 +269,110 @@ export default function App() {
       setTotals([])
       setTotalEarnings(0)
       setBySeller([])
-      setMovements([])
+      setDraftByProduct({})
+      setDraftRemovalByProduct({})
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo cerrar sesión')
     }
   }, [])
 
+  const myUnitsByProduct = (() => {
+    const map: Record<string, number> = {}
+    if (!mySeller) return map
+    for (const row of bySeller) {
+      if (row.seller_id !== mySeller.id) continue
+      map[row.product_id] = (map[row.product_id] ?? 0) + row.units_sold
+    }
+    return map
+  })()
+
   const handleDelta = useCallback(
-    async (productId: string, delta: 1 | -1) => {
-      if (!mySeller) return
-      try {
-        setError(null)
-        if (delta === -1) {
-          const globalRow = totals.find((p) => p.product_id === productId)
-          const myRow = bySeller.find(
-            (row) => row.product_id === productId && row.seller_id === mySeller.id
-          )
-          const globalUnits = globalRow?.units_sold ?? 0
-          const myUnits = myRow?.units_sold ?? 0
-          if (globalUnits <= 0 || myUnits <= 0) {
-            setError('No puedes restar: ese producto ya esta en 0 para tu usuario. El número que ves son ventas de otros usuarios :)')
-            return
-          }
+    (productId: string, delta: 1 | -1) => {
+      if (delta === 1) {
+        const removal = draftRemovalByProduct[productId] ?? 0
+        if (removal > 0) {
+          setDraftRemovalByProduct((prev) => ({ ...prev, [productId]: removal - 1 }))
+          return
         }
-        await recordSale(productId, mySeller.id, delta)
-        await loadData()
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'No se pudo registrar la venta')
+        setDraftByProduct((prev) => ({ ...prev, [productId]: (prev[productId] ?? 0) + 1 }))
+        return
+      }
+      if (delta === -1) {
+        const draft = draftByProduct[productId] ?? 0
+        if (draft > 0) {
+          setDraftByProduct((prev) => ({ ...prev, [productId]: draft - 1 }))
+          return
+        }
+        const myUnits = myUnitsByProduct[productId] ?? 0
+        const removal = draftRemovalByProduct[productId] ?? 0
+        if (removal < myUnits) {
+          setDraftRemovalByProduct((prev) => ({ ...prev, [productId]: removal + 1 }))
+        }
       }
     },
-    [mySeller, bySeller, totals, loadData]
+    [draftByProduct, draftRemovalByProduct, myUnitsByProduct]
+  )
+
+  const pendingDraftCount = Object.values(draftByProduct).reduce((a, q) => a + q, 0)
+  const hasDraft = pendingDraftCount > 0
+  const pendingRemovalCount = Object.values(draftRemovalByProduct).reduce((a, q) => a + q, 0)
+  const hasRemovalDraft = pendingRemovalCount > 0
+
+  const handleConfirmSale = useCallback(async () => {
+    if (!mySeller || !hasDraft) return
+    setError(null)
+    setConfirming(true)
+    try {
+      const items = Object.entries(draftByProduct)
+        .filter(([, q]) => q > 0)
+        .map(([productId, quantity]) => ({ productId, quantity }))
+      await recordSalesBatch(mySeller.id, items)
+      await loadData()
+      setDraftByProduct({})
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo confirmar la venta')
+    } finally {
+      setConfirming(false)
+    }
+  }, [mySeller, hasDraft, draftByProduct, loadData])
+
+  const handleConfirmRemoval = useCallback(async () => {
+    if (!mySeller || !hasRemovalDraft) return
+    setDeleting(true)
+    setShowDeleteConfirm(false)
+    try {
+      setError(null)
+      const items = Object.entries(draftRemovalByProduct)
+        .filter(([, q]) => q > 0)
+        .map(([productId, quantity]) => ({ productId, quantity }))
+      await recordDeletionsBatch(mySeller.id, items)
+      await loadData()
+      setDraftRemovalByProduct({})
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudieron eliminar las ventas')
+    } finally {
+      setDeleting(false)
+    }
+  }, [mySeller, hasRemovalDraft, draftRemovalByProduct, loadData])
+
+  const totalsWithDraft = totals.map((p) => {
+    const draft = draftByProduct[p.product_id] ?? 0
+    const removal = draftRemovalByProduct[p.product_id] ?? 0
+    const base = Math.max(0, p.units_sold)
+    const units = Math.max(0, base + draft - removal)
+    return {
+      ...p,
+      units_sold: units,
+      earnings_cents: units * p.price_cents,
+    }
+  })
+  const totalsByCategoryWithDraft = totalsWithDraft.reduce<Record<CositosCategoryId, ProductTotal[]>>(
+    (acc, product) => {
+      const category = getCositosCategory(product.name)
+      acc[category].push(product)
+      return acc
+    },
+    { merch: [], zines: [], artefactos: [], otros: [] }
   )
 
   if (user === undefined || (user && !mySeller && loading)) {
@@ -413,9 +460,7 @@ export default function App() {
                 medida que vas vendiendo durante el evento.
               </li>
               <li>
-                Cada toque en <strong>+</strong> o <strong>-</strong> guarda un
-                movimiento en la base de datos compartida y actualiza
-                los totales.
+                Usa <strong>+</strong> para sumar ventas y <strong>-</strong> para restar del borrador o, si ya tienes ventas tuyas, para marcar correcciones (eliminaciones). Los cambios se guardan al pulsar <strong>Confirmar venta</strong> o <strong>Eliminar</strong>.
               </li>
               <li>
                 En <strong>Seguimiento</strong> puedes ver el resumen global de
@@ -440,24 +485,34 @@ export default function App() {
                 { id: 'otros', title: 'Otros' },
               ] as const
             ).map(({ id, title }) => {
-              const products = totalsByCategory[id]
+              const products = totalsByCategoryWithDraft[id]
               if (products.length === 0) return null
               return (
                 <div key={id} className="app__cositos-group">
                   <h3 className="app__cositos-group-title">{title}</h3>
                   <div className="app__products">
-                    {products.map((product) => (
-                      <ProductCounter
-                        key={product.product_id}
-                        product={{
-                          ...product,
-                          name: getStandardizedProductName(product.name),
-                        }}
-                        onPlus={() => handleDelta(product.product_id, 1)}
-                        onMinus={() => handleDelta(product.product_id, -1)}
-                        disabled={!mySeller}
-                      />
-                    ))}
+                    {products.map((product) => {
+                      const draft = draftByProduct[product.product_id] ?? 0
+                      const removal = draftRemovalByProduct[product.product_id] ?? 0
+                      const myUnits = myUnitsByProduct[product.product_id] ?? 0
+                      const minusDisabled =
+                        !mySeller || (draft === 0 && (myUnits === 0 || removal >= myUnits))
+                      return (
+                        <ProductCounter
+                          key={product.product_id}
+                          product={{
+                            ...product,
+                            name: getStandardizedProductName(product.name),
+                          }}
+                          onPlus={() => handleDelta(product.product_id, 1)}
+                          onMinus={() => handleDelta(product.product_id, -1)}
+                          disabled={!mySeller}
+                          minusDisabled={minusDisabled}
+                          myUnits={myUnits - removal}
+                          removalDraft={removal > 0 ? removal : undefined}
+                        />
+                      )
+                    })}
                   </div>
                 </div>
               )
@@ -538,7 +593,7 @@ export default function App() {
                 type="button"
                 className="app__export-btn"
                 onClick={() =>
-                  downloadReport(totals, totalEarnings, bySeller, movements, 'json')
+                  downloadReport(totals, totalEarnings, bySeller, 'json')
                 }
               >
                 Descargar JSON
@@ -547,7 +602,7 @@ export default function App() {
                 type="button"
                 className="app__export-btn"
                 onClick={() =>
-                  downloadReport(totals, totalEarnings, bySeller, movements, 'csv-global')
+                  downloadReport(totals, totalEarnings, bySeller, 'csv-global')
                 }
               >
                 CSV dinero global
@@ -556,7 +611,7 @@ export default function App() {
                 type="button"
                 className="app__export-btn"
                 onClick={() =>
-                  downloadReport(totals, totalEarnings, bySeller, movements, 'csv-seller')
+                  downloadReport(totals, totalEarnings, bySeller, 'csv-seller')
                 }
               >
                 CSV por vendedor
@@ -565,6 +620,74 @@ export default function App() {
           </section>
         )}
       </main>
+
+      {hasDraft && (
+        <div className="app__confirm-wrap">
+          <button
+            type="button"
+            className="app__confirm-sale"
+            onClick={handleConfirmSale}
+            disabled={!mySeller || confirming}
+            aria-label="Confirmar venta"
+          >
+            {confirming ? 'Guardando…' : `Confirmar venta${pendingDraftCount > 0 ? ` (${pendingDraftCount})` : ''}`}
+          </button>
+        </div>
+      )}
+
+      {hasRemovalDraft && (
+        <div className="app__confirm-wrap app__confirm-wrap--removal">
+          <button
+            type="button"
+            className="app__confirm-removal"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={!mySeller || deleting}
+            aria-label="Confirmar eliminación"
+          >
+            Eliminar ({pendingRemovalCount})
+          </button>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div className="app__modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title">
+          <div className="app__modal">
+            <h2 id="delete-confirm-title" className="app__modal-title">¿Eliminar estas ventas?</h2>
+            <p className="app__modal-text">
+              Se restarán del total las unidades que has marcado. Esta acción no se puede deshacer.
+            </p>
+            <ul className="app__modal-list">
+              {Object.entries(draftRemovalByProduct)
+                .filter(([, q]) => q > 0)
+                .map(([productId, q]) => {
+                  const p = totals.find((t) => t.product_id === productId)
+                  return (
+                    <li key={productId}>
+                      {p ? getStandardizedProductName(p.name) : productId}: {q} uds
+                    </li>
+                  )
+                })}
+            </ul>
+            <div className="app__modal-actions">
+              <button
+                type="button"
+                className="app__modal-btn app__modal-btn--cancel"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="app__modal-btn app__modal-btn--confirm"
+                onClick={handleConfirmRemoval}
+                disabled={deleting}
+              >
+                {deleting ? 'Eliminando…' : 'Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <nav className="app__bottom-nav" aria-label="Principal">
         <button
