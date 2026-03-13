@@ -5,3 +5,6 @@ export default defineConfig({
   plugins: [react()],
   base: process.env.GITHUB_PAGES === 'true' ? '/stand_prices_app/' : '/',
 })
+
+
+
