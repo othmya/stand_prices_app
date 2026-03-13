@@ -1,6 +1,10 @@
-# Stand Sales
+# zumito stand ventas tracking app
 
-Phone-first app to track sales at a zine stand: zines (€2), t-shirts (€10), and totebags (€7). Log +1 / −1 per item, choose a seller, and see live totals and earnings. Data is stored in Supabase; the app is deployed on GitHub Pages.
+Una mini-app hecha rápidamente como una pequeña herramienta para ayudar a trackear ventas hechas en diferentes eventos. Específicamente hecha para fanzines en diferentes feria.
 
-**Live app:** [https://othmya.github.io/stand_prices_app/](https://othmya.github.io/stand_prices_app/)
+Para Zumito.
+
+Sobretodo typescript, CSS y SQL, conectada a una base de datos en Supabase.
+
+**Para acceder a la app:** [https://othmya.github.io/stand_prices_app/](https://othmya.github.io/stand_prices_app/)
 
