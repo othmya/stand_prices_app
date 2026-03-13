@@ -315,7 +315,7 @@ export default function App() {
           const globalUnits = globalRow?.units_sold ?? 0
           const myUnits = myRow?.units_sold ?? 0
           if (globalUnits <= 0 || myUnits <= 0) {
-            setError('No puedes restar: ese producto ya esta en 0 para tu usuario.')
+            setError('No puedes restar: ese producto ya esta en 0 para tu usuario. El número que ves son ventas de otros usuarios :)')
             return
           }
         }
@@ -385,9 +385,17 @@ export default function App() {
       </header>
 
       {error && (
-        <p className="app__error" role="alert">
-          {error}
-        </p>
+        <div className="app__error" role="alert">
+          <span>{error}</span>
+          <button
+            type="button"
+            className="app__error-close"
+            aria-label="Cerrar aviso"
+            onClick={() => setError(null)}
+          >
+            ×
+          </button>
+        </div>
       )}
 
       <main className="app__main">
