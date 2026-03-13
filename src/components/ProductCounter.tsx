@@ -18,7 +18,7 @@ export default function ProductCounter({
   disabled,
 }: Props) {
   return (
-    <section className="product-counter" aria-label={`${product.name} sold`}>
+    <section className="product-counter" aria-label={`${product.name} vendidos`}>
       <div className="product-counter__header">
         <span className="product-counter__name">{product.name}</span>
         <span className="product-counter__price">{formatPrice(product.price_cents)}</span>
@@ -29,7 +29,7 @@ export default function ProductCounter({
           className="product-counter__btn product-counter__btn--minus"
           onClick={onMinus}
           disabled={disabled}
-          aria-label={`Remove one ${product.name} sold`}
+          aria-label={`Restar una unidad vendida de ${product.name}`}
         >
           −
         </button>
@@ -41,13 +41,13 @@ export default function ProductCounter({
           className="product-counter__btn product-counter__btn--plus"
           onClick={onPlus}
           disabled={disabled}
-          aria-label={`Add one ${product.name} sold`}
+          aria-label={`Sumar una unidad vendida de ${product.name}`}
         >
           +
         </button>
       </div>
       <div className="product-counter__earnings">
-        {formatPrice(product.earnings_cents)} so far
+        {formatPrice(product.earnings_cents)} acumulados
       </div>
     </section>
   )

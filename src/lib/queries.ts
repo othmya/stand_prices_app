@@ -35,6 +35,17 @@ export type SellerProductTotal = {
   price_cents: number
   units_sold: number
   earnings_cents: number
+  first_sale_at: string | null
+  last_sale_at: string | null
+}
+
+export type SaleMovement = {
+  seller_id: string
+  product_id: string
+  seller_display_name: string
+  product_name: string
+  delta: number
+  created_at: string
 }
 
 export async function fetchProducts(): Promise<Product[]> {
@@ -107,11 +118,44 @@ export async function fetchTotalEarnings(): Promise<number> {
 export async function fetchSellerProductTotals(): Promise<SellerProductTotal[]> {
   const { data, error } = await supabase
     .from('seller_product_totals')
-    .select('seller_id, seller_display_name, product_id, product_name, price_cents, units_sold, earnings_cents')
+    .select('seller_id, seller_display_name, product_id, product_name, price_cents, units_sold, earnings_cents, first_sale_at, last_sale_at')
     .order('seller_display_name')
     .order('price_cents', { ascending: false })
   if (error) throw error
   return data as SellerProductTotal[]
+}
+
+/** Raw movements timeline for CSV export (includes timestamp). */
+export async function fetchSalesMovements(): Promise<SaleMovement[]> {
+  const { data, error } = await supabase
+    .from('sales_events')
+    .select('seller_id, product_id, delta, created_at, sellers!inner(display_name), products!inner(name)')
+    .order('created_at', { ascending: true })
+  if (error) throw error
+
+  return (data ?? [])
+    .map(
+      (row: {
+        seller_id: string
+        product_id: string
+        delta: number
+        created_at: string
+        sellers: { display_name: string } | { display_name: string }[]
+        products: { name: string } | { name: string }[]
+      }) => {
+        const seller = Array.isArray(row.sellers) ? row.sellers[0] : row.sellers
+        const product = Array.isArray(row.products) ? row.products[0] : row.products
+        return {
+          seller_id: row.seller_id,
+          product_id: row.product_id,
+          delta: row.delta,
+          created_at: row.created_at,
+          seller_display_name: seller?.display_name ?? '',
+          product_name: product?.name ?? '',
+        }
+      }
+    )
+    .filter((row) => row.seller_display_name !== '' && row.product_name !== '')
 }
 
 export async function recordSale(

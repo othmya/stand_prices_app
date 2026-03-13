@@ -5,7 +5,7 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, sans-serif;
-  background: #0c0c0c;
+  background: #000;
   color: #fafafa;
   min-height: 100vh;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -19,13 +19,26 @@ body {
 .app {
   max-width: 26rem;
   margin: 0 auto;
-  padding: 1.25rem 1rem;
+  padding: 1.25rem 1rem 4.5rem;
   min-height: 100vh;
 }
 
 .app__header {
   text-align: center;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
+  border: none;
+  box-shadow: none;
+}
+
+.app__logo {
+  width: min(12rem, 58vw);
+  height: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 0.6rem auto;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .app__header h1 {
@@ -39,13 +52,73 @@ body {
   font-size: 1.125rem;
   font-weight: 600;
   margin: 0;
-  color: #86efac;
+  color: #b18cff;
 }
 
 .app__message {
   text-align: center;
   color: #737373;
   font-size: 0.9375rem;
+}
+
+.app__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.app__section {
+  display: block;
+}
+
+.app__section-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  color: #e5e5e5;
+}
+
+.app__section--cositos .app__section-title {
+  margin-bottom: 0.5rem;
+}
+
+.app__cositos-group {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.7rem 0.75rem 0.45rem 0.75rem;
+}
+
+.app__cositos-group + .app__cositos-group {
+  margin-top: 1.1rem;
+}
+
+.app__cositos-group-title {
+  margin: 0 0 0.55rem 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.app__cositos-group .product-counter {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app__cositos-group .product-counter:last-child {
+  border-bottom: none;
+}
+
+.app__info-list {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.875rem;
+  color: #a3a3a3;
+}
+
+.app__info-list li + li {
+  margin-top: 0.35rem;
 }
 
 .app__error {
@@ -86,6 +159,9 @@ body {
   font-size: 0.9375rem;
   font-weight: 500;
   color: #fafafa;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
 }
 
 .product-counter__price {
@@ -129,12 +205,12 @@ body {
 }
 
 .product-counter__btn--plus {
-  background: rgba(34, 197, 94, 0.25);
-  color: #86efac;
+  background: rgba(177, 140, 255, 0.28);
+  color: #b18cff;
 }
 
 .product-counter__btn--plus:hover:not(:disabled) {
-  background: rgba(34, 197, 94, 0.35);
+  background: rgba(177, 140, 255, 0.42);
 }
 
 .product-counter__btn:disabled {
@@ -152,8 +228,9 @@ body {
 
 .product-counter__earnings {
   grid-column: 1 / -1;
-  font-size: 0.75rem;
-  color: #525252;
+  font-size: 0.84rem;
+  color: #d4d4d4;
+  font-weight: 500;
   margin-top: -0.25rem;
   padding-left: 0;
 }
@@ -251,7 +328,7 @@ body {
 .app__sign-out {
   background: none;
   border: none;
-  color: #86efac;
+  color: #b18cff;
   cursor: pointer;
   font-size: inherit;
   text-decoration: underline;
@@ -259,14 +336,12 @@ body {
 }
 
 .app__sign-out:hover {
-  color: #bbf7d0;
+  color: #d2bcff;
 }
 
 /* Sales by seller */
 .app__by-seller {
-  margin-top: 1.75rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 0.75rem;
 }
 
 .app__by-seller-title {
@@ -278,41 +353,68 @@ body {
 
 .app__by-seller-block {
   margin-bottom: 1rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .app__by-seller-name {
-  font-size: 0.8125rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #e5e5e5;
-  margin: 0 0 0.35rem 0;
+  margin: 0 0 0.5rem 0;
 }
 
-.app__by-seller-list {
-  list-style: none;
-  margin: 0;
-  padding: 0 0 0 0.5rem;
-  border-left: 2px solid rgba(255, 255, 255, 0.08);
+.app__by-seller-table {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.4rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app__by-seller-head {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8c8c8c;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .app__by-seller-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.75rem;
   font-size: 0.8125rem;
   color: #a3a3a3;
-  padding: 0.2rem 0;
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.app__by-seller-row span:last-child {
+.app__by-seller-product {
+  color: #d4d4d4;
+}
+
+.app__by-seller-units {
+  color: #fafafa;
+  font-weight: 700;
+  min-width: 2ch;
+  text-align: right;
+}
+
+.app__by-seller-price {
   color: #737373;
   white-space: nowrap;
 }
 
 /* Export */
 .app__export {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 1rem;
 }
 
 .app__export-label {
@@ -340,4 +442,68 @@ body {
 .app__export-btn:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #e5e5e5;
+}
+
+/* Tracking */
+.app__tracking-summary {
+  font-size: 0.875rem;
+  color: #e5e5e5;
+  margin: 0 0 0.75rem 0;
+}
+
+.app__tracking-products,
+.app__tracking-sellers {
+  margin-top: 0.75rem;
+}
+
+.app__tracking-subtitle {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #a3a3a3;
+  margin: 0 0 0.5rem 0;
+}
+
+.app__tracking-zumiter-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.65rem 0;
+  color: #f1f5f9;
+}
+
+/* Bottom navigation */
+.app__bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.35rem 0.75rem calc(0.35rem + env(safe-area-inset-bottom));
+  background: rgba(10, 10, 10, 0.98);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  backdrop-filter: blur(18px);
+}
+
+.app__bottom-nav-btn {
+  flex: 1 1 0;
+  max-width: 5.5rem;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.75rem;
+  border-radius: 999px;
+  border: none;
+  background: rgba(38, 38, 38, 0.9);
+  color: #a3a3a3;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app__bottom-nav-btn--active {
+  background: rgba(177, 140, 255, 0.4);
+  color: #f9fafb;
+}
+
+.app__bottom-nav-btn:focus-visible {
+  outline: 2px solid rgba(177, 140, 255, 0.82);
+  outline-offset: 2px;
 }

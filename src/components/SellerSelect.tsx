@@ -15,15 +15,15 @@ export default function SellerSelect({
 }: Props) {
   return (
     <section className="seller-select">
-      <label htmlFor="seller-picker">Seller</label>
+      <label htmlFor="seller-picker">Vendedor</label>
       <select
         id="seller-picker"
         value={selectedId ?? ''}
         onChange={(e) => onSelect(e.target.value)}
         disabled={loading}
-        aria-label="Choose seller"
+        aria-label="Elegir vendedor"
       >
-        <option value="">Select seller…</option>
+        <option value="">Selecciona vendedor…</option>
         {sellers.map((s) => (
           <option key={s.id} value={s.id}>
             {s.display_name}

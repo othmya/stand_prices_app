@@ -21,18 +21,18 @@ export default function SignIn({ onSuccess }: Props) {
     try {
       if (isSignUp) {
         await signUp(email, password)
-        const name = displayName.trim() || email.split('@')[0] || 'Seller'
+        const name = displayName.trim() || email.split('@')[0] || 'Vendedor'
         try {
           await ensureMySeller(name)
         } catch {
-          // Seller may be created in App after redirect; continue so user gets to the app
+          // Puede crearse en App tras redireccionar; continuar para entrar a la app
         }
       } else {
         await signIn(email, password)
       }
       onSuccess()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign in failed')
+      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesion')
     } finally {
       setLoading(false)
     }
@@ -40,12 +40,14 @@ export default function SignIn({ onSuccess }: Props) {
 
   return (
     <div className="sign-in">
-      <h2 className="sign-in__title">{isSignUp ? 'Create account' : 'Sign in'}</h2>
+      <h2 className="sign-in__title">{isSignUp ? 'Crear cuenta' : 'Iniciar sesion'}</h2>
       <form className="sign-in__form" onSubmit={handleSubmit}>
         <label className="sign-in__label" htmlFor="signin-email">
-          Email or username
+          Correo o usuario
         </label>
-        <p className="sign-in__hint">Use a username as email (e.g. maria@stand). No real email needed.</p>
+        <p className="sign-in__hint">
+          Usa tu usuario como correo (ejemplo: maria@stand). No hace falta correo real.
+        </p>
         <input
           id="signin-email"
           type="email"
@@ -59,7 +61,7 @@ export default function SignIn({ onSuccess }: Props) {
         {isSignUp && (
           <>
             <label className="sign-in__label" htmlFor="signin-displayname">
-              Display name (for sales)
+              Nombre visible (para ventas)
             </label>
             <input
               id="signin-displayname"
@@ -68,12 +70,12 @@ export default function SignIn({ onSuccess }: Props) {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               autoComplete="name"
-              placeholder="Your name"
+              placeholder="Tu nombre"
             />
           </>
         )}
         <label className="sign-in__label" htmlFor="signin-password">
-          Password
+          Contrasena
         </label>
         <input
           id="signin-password"
@@ -84,11 +86,11 @@ export default function SignIn({ onSuccess }: Props) {
           required
           autoComplete={isSignUp ? 'new-password' : 'current-password'}
           minLength={6}
-          placeholder={isSignUp ? 'Min 6 characters' : ''}
+          placeholder={isSignUp ? 'Minimo 6 caracteres' : ''}
         />
         {error && <p className="sign-in__error" role="alert">{error}</p>}
         <button type="submit" className="sign-in__submit" disabled={loading}>
-          {loading ? 'Please wait…' : isSignUp ? 'Sign up' : 'Sign in'}
+          {loading ? 'Espera…' : isSignUp ? 'Registrarse' : 'Entrar'}
         </button>
       </form>
       <button
@@ -96,7 +98,7 @@ export default function SignIn({ onSuccess }: Props) {
         className="sign-in__toggle"
         onClick={() => { setIsSignUp((v) => !v); setError(null); }}
       >
-        {isSignUp ? 'Already have an account? Sign in' : 'No account? Sign up'}
+        {isSignUp ? 'Ya tienes cuenta? Inicia sesion' : 'No tienes cuenta? Registrate'}
       </button>
     </div>
   )
