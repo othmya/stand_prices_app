@@ -10,7 +10,9 @@ values
   ('00000000-0000-0000-0000-000000000006'::uuid, 'totebag', 700),
   ('00000000-0000-0000-0000-000000000007'::uuid, 'guía de pirateo', 200),
   ('00000000-0000-0000-0000-000000000008'::uuid, 'guía de contabili', 200),
-  ('00000000-0000-0000-0000-000000000009'::uuid, 'postal', 100)
+  ('00000000-0000-0000-0000-000000000009'::uuid, 'postal', 200),
+  ('00000000-0000-0000-0000-00000000000a'::uuid, 'funzeig', 200),
+  ('00000000-0000-0000-0000-00000000000b'::uuid, 'Petit Maman', 200)
 on conflict (id) do nothing;
 
 -- Sellers are created when users sign up (no placeholder rows).

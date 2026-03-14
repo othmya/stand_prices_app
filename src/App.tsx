@@ -45,7 +45,9 @@ function getCositosCategory(productName: string): CositosCategoryId {
   if (
     name.includes('guia de contabilidad') ||
     name.includes('guia de contabili') ||
-    name.includes('guia de pirateo')
+    name.includes('guia de pirateo') ||
+    name.includes('funzzeig') ||
+    name.includes('petit maman')
   ) {
     return 'artefactos'
   }
@@ -66,6 +68,8 @@ function getStandardizedProductName(productName: string): string {
     return 'Guía de contabilidad'
   }
   if (name.includes('guia de pirateo')) return 'Guía de pirateo'
+  if (name.includes('funzeig')) return 'Funzeig'
+  if (name.includes('petit maman')) return 'Petit Maman'
   return productName
 }
 
