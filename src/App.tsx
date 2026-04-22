@@ -384,7 +384,7 @@ export default function App() {
       <div className="app">
         <header className="app__header">
           <img src={zzLogo} alt="Zumito logo" className="app__logo" />
-          <h1>La Llama Fest</h1>
+          <h1>Sant Jordi</h1>
         </header>
         <p className="app__message">Cargando…</p>
       </div>
@@ -396,7 +396,7 @@ export default function App() {
       <div className="app">
         <header className="app__header">
           <img src={zzLogo} alt="Zumito logo" className="app__logo" />
-          <h1>La Llama Fest</h1>
+          <h1>Sant Jordi</h1>
         </header>
         <SignIn onSuccess={() => getSession().then(({ data: { session } }) => setUser(session?.user ?? null))} />
       </div>
@@ -408,7 +408,7 @@ export default function App() {
       <div className="app">
         <header className="app__header">
           <img src={zzLogo} alt="Zumito logo" className="app__logo" />
-          <h1>La Llama Fest</h1>
+          <h1>Sant Jordi</h1>
         </header>
         <p className="app__message">Cargando…</p>
       </div>
@@ -419,7 +419,7 @@ export default function App() {
     <div className="app">
       <header className="app__header">
         <img src={zzLogo} alt="Zumito logo" className="app__logo" />
-        <h1>La Llama Fest</h1>
+        <h1>Sant Jordi</h1>
         <p className="app__total-earnings" aria-live="polite">
           Total: {formatEarnings(totalEarnings)}
         </p>

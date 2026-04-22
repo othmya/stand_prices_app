@@ -1,4 +1,4 @@
--- Run after schema.sql. Idempotent: insert only if no rows.
+-- Run after schema.sql. Inserts products and updates name/price if row already exists.
 
 insert into public.products (id, name, price_cents)
 values
@@ -13,6 +13,6 @@ values
   ('00000000-0000-0000-0000-000000000009'::uuid, 'postal', 200),
   ('00000000-0000-0000-0000-00000000000a'::uuid, 'funzeig', 200),
   ('00000000-0000-0000-0000-00000000000b'::uuid, 'Petit Maman', 200)
-on conflict (id) do nothing;
+on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents;
 
 -- Sellers are created when users sign up (no placeholder rows).
